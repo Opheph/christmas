@@ -349,19 +349,6 @@ export const PixelCat: React.FC<PixelCatProps> = ({ message, hat, accessory, isT
                     );
                 }
 
-                if (action === 'surprised') {
-                   // Fallback surprised
-                   return (
-                      <g>
-                         <rect x="8" y="9" width="2" height="3" fill="#333" />
-                         <rect x="16" y="9" width="2" height="3" fill="#333" />
-                         <rect x="12" y="13" width="2" height="2" fill="#333" />
-                         <rect x="3" y="11" width="2" height="1" fill="#CCC" />
-                         <rect x="21" y="11" width="2" height="1" fill="#CCC" />
-                      </g>
-                   );
-                }
-
                 // Default / Idle
                 return (
                     <g>

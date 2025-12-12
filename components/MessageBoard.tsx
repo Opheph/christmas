@@ -1,32 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { GuestBookEntry } from '../types';
-import { getGuestbookMessages, addGuestbookMessage } from '../services/guestbookService';
+import { subscribeToGuestbook, addGuestbookMessage } from '../services/guestbookService';
 
 export const MessageBoard: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<GuestBookEntry[]>([]);
   const [newName, setNewName] = useState('');
   const [newMessage, setNewMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load messages on mount and listen for updates
+  // Subscribe to real-time updates from Firebase
   useEffect(() => {
-    const load = () => setMessages(getGuestbookMessages());
-    load();
-
-    const handleStorageChange = () => load();
-    window.addEventListener('storage', handleStorageChange);
+    const unsubscribe = subscribeToGuestbook((updatedMessages) => {
+      setMessages(updatedMessages);
+    });
     
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isSubmitting) return;
     
-    const updated = addGuestbookMessage(newName, newMessage);
-    setMessages(updated);
-    setNewMessage('');
-    // Keep name for convenience
+    setIsSubmitting(true);
+    try {
+        await addGuestbookMessage(newName, newMessage);
+        setNewMessage('');
+        // Keep name for convenience
+    } catch (error) {
+        console.error("Failed to send message", error);
+        alert("Failed to sign guestbook. Please try again.");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const formatDate = (ts: number) => {
@@ -78,7 +85,23 @@ export const MessageBoard: React.FC = () => {
 
              {/* Message List */}
              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#EFEBE9]">
-                {messages.length === 0 && <p className="text-center text-gray-500">No messages yet. Be the first!</p>}
+                
+                {/* 🎅 SPECIAL SANTA MESSAGE (PINNED) */}
+                <div className="bg-[#FFF8E1] p-3 border-4 border-[#FFC107] shadow-md relative animate-pulse-slow">
+                    <div className="flex justify-between items-baseline mb-1 border-b border-dashed border-orange-300 pb-1">
+                       <span className="font-bold text-[#D32F2F] text-xl flex items-center gap-1">
+                         🎅 Santa Claus
+                       </span>
+                       <span className="text-xs text-[#F57F17]">Dec 25</span>
+                    </div>
+                    <p className="text-lg leading-snug text-[#3E2723] break-words font-medium">
+                       Ho ho ho! Merry Christmas, Yancy! 🐾 You've been a very good cat. I left some magic in the tree for you and Lexi! 🎄✨
+                    </p>
+                    {/* Tiny visual deco for santa msg */}
+                    <div className="absolute -top-2 -right-2 text-xl">🎁</div>
+                </div>
+
+                {messages.length === 0 && <p className="text-center text-gray-500 mt-4">No other messages yet. Be the first!</p>}
                 
                 {messages.map((msg) => (
                   <div key={msg.id} className="bg-white p-3 border-2 border-[#A1887F] shadow-sm relative">
@@ -101,6 +124,7 @@ export const MessageBoard: React.FC = () => {
                       value={newName}
                       onChange={e => setNewName(e.target.value)}
                       className="p-2 border-2 border-[#A1887F] bg-white focus:outline-none focus:border-[#5D4037] font-sans text-sm"
+                      disabled={isSubmitting}
                    />
                    <div className="flex gap-2">
                       <input 
@@ -111,12 +135,14 @@ export const MessageBoard: React.FC = () => {
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         className="flex-1 p-2 border-2 border-[#A1887F] bg-white focus:outline-none focus:border-[#5D4037] font-sans text-sm"
+                        disabled={isSubmitting}
                       />
                       <button 
                         type="submit"
-                        className="bg-[#5D4037] text-white px-4 py-2 hover:bg-[#3E2723] transition-colors border-2 border-black font-bold uppercase"
+                        disabled={isSubmitting}
+                        className="bg-[#5D4037] text-white px-4 py-2 hover:bg-[#3E2723] transition-colors border-2 border-black font-bold uppercase disabled:opacity-50"
                       >
-                        Sign
+                        {isSubmitting ? '...' : 'Sign'}
                       </button>
                    </div>
                 </form>
@@ -128,6 +154,13 @@ export const MessageBoard: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #D7CCC8; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #8D6E63; border: 1px solid #5D4037; }
+        @keyframes pulse-slow {
+            0%, 100% { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transform: scale(1); }
+            50% { box-shadow: 0 10px 15px -3px rgba(255, 193, 7, 0.3); transform: scale(1.01); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
       `}</style>
     </>
   );

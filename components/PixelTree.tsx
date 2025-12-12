@@ -1,14 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const PixelTree: React.FC = () => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+
+  // Handle click to trigger a short burst of interaction
+  const handleClick = () => {
+    setIsClicked(true);
+    setTimeout(() => setIsClicked(false), 2000); // Effect lasts 2 seconds after click
+  };
+
+  const isLit = isHovered || isClicked;
+
+  // Light coordinates extracted for cleaner rendering
+  const lights = [
+    { x: 32, y: 62, delay: '0.1s' },
+    { x: 66, y: 58, delay: '0.5s' },
+    { x: 44, y: 50, delay: '1.2s' },
+    { x: 56, y: 42, delay: '0.8s' },
+    { x: 50, y: 24, delay: '0.3s' },
+    { x: 22, y: 72, delay: '1.5s' },
+    { x: 76, y: 68, delay: '0.7s' },
+  ];
+
   return (
-    <div className="relative w-80 h-96 sm:w-96 sm:h-[30rem] mx-auto group">
-      {/* Ambient Glow Aura */}
+    <div 
+      className="relative w-80 h-96 sm:w-96 sm:h-[30rem] mx-auto group cursor-pointer transition-transform duration-200 active:scale-95"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+    >
+      {/* Ambient Glow Aura - Changes from gold to multicolor when lit */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] z-[-1] rounded-full pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] z-[-1] rounded-full pointer-events-none transition-all duration-500"
         style={{
-          background: 'radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.05) 50%, rgba(0,0,0,0) 70%)',
+          background: isLit 
+            ? 'radial-gradient(circle, rgba(255, 0, 0, 0.15) 0%, rgba(0, 255, 0, 0.1) 30%, rgba(0, 0, 255, 0.1) 60%, rgba(0,0,0,0) 80%)'
+            : 'radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.05) 50%, rgba(0,0,0,0) 70%)',
           filter: 'blur(20px)',
+          opacity: isLit ? 1 : 0.8
         }}
       />
       
@@ -174,19 +204,55 @@ export const PixelTree: React.FC = () => {
         <rect x="36" y="46" width="2" height="2" fill="#1976D2" /> 
         <rect x="48" y="36" width="3" height="3" fill="#D32F2F" />
 
-        {/* Twinkling Lights */}
-        <rect x="32" y="62" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '0.1s' }} />
-        <rect x="66" y="58" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '0.5s' }} />
-        <rect x="44" y="50" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '1.2s' }} />
-        <rect x="56" y="42" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '0.8s' }} />
-        <rect x="50" y="24" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '0.3s' }} />
-        <rect x="22" y="72" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '1.5s' }} />
-        <rect x="76" y="68" width="2" height="2" fill="#FFF" className="animate-pulse" style={{ animationDelay: '0.7s' }} />
+        {/* Interactive Lights */}
+        {lights.map((l, i) => (
+            <rect 
+                key={i}
+                x={l.x} 
+                y={l.y} 
+                width="2" 
+                height="2" 
+                className={isLit ? "animate-disco" : "animate-pulse"}
+                style={{ 
+                    animationDelay: isLit ? `-${Math.random()}s` : l.delay,
+                    // When lit, the class controls the fill. When not lit, it's white.
+                    fill: isLit ? undefined : '#FFF' 
+                }}
+            />
+        ))}
 
-        {/* The Star */}
-        <path d="M 50 2 L 52 8 L 58 8 L 54 12 L 56 18 L 50 14 L 44 18 L 46 12 L 42 8 L 48 8 Z" fill="#FFD700" className="animate-pulse" />
-        <rect x="49" y="7" width="2" height="2" fill="#FFF" opacity="0.8" />
+        {/* The Star - Spins when interactive */}
+        <path 
+            d="M 50 2 L 52 8 L 58 8 L 54 12 L 56 18 L 50 14 L 44 18 L 46 12 L 42 8 L 48 8 Z" 
+            fill={isLit ? "#FFF176" : "#FFD700"} 
+            className={isLit ? "animate-spin-slow origin-center" : "animate-pulse"}
+            style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+        />
+        <rect x="49" y="7" width="2" height="2" fill="#FFF" opacity="0.8" className="pointer-events-none" />
       </svg>
+
+      <style>{`
+         /* Disco flashing colors */
+         @keyframes disco {
+            0% { fill: #ef4444; } /* red */
+            20% { fill: #eab308; } /* yellow */
+            40% { fill: #22c55e; } /* green */
+            60% { fill: #3b82f6; } /* blue */
+            80% { fill: #a855f7; } /* purple */
+            100% { fill: #ef4444; }
+         }
+         .animate-disco {
+             animation: disco 0.6s step-end infinite;
+         }
+         
+         .animate-spin-slow {
+             animation: spin 3s linear infinite;
+         }
+         @keyframes spin {
+             from { transform: rotate(0deg); }
+             to { transform: rotate(360deg); }
+         }
+      `}</style>
     </div>
   );
 };

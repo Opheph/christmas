@@ -1,50 +1,48 @@
+import { db } from './firebase';
+import { ref, push, onValue, off, set, query, limitToLast, orderByKey } from "firebase/database";
 import { GuestBookEntry } from '../types';
 
-const STORAGE_KEY = 'yancy_guestbook_v1';
+const DB_PATH = 'guestbook';
 
-const SEED_DATA: GuestBookEntry[] = [
-  {
-    id: '1',
-    name: 'Santa Claus',
-    message: 'Ho ho ho! Checking the list twice!',
-    timestamp: Date.now() - 10000000
-  },
-  {
-    id: '2',
-    name: 'Rudolph',
-    message: 'The fog is thick tonight, stay safe!',
-    timestamp: Date.now() - 5000000
-  }
-];
-
-export const getGuestbookMessages = (): GuestBookEntry[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
-      return SEED_DATA;
+// Subscribe to real-time updates
+export const subscribeToGuestbook = (callback: (messages: GuestBookEntry[]) => void) => {
+  const messagesRef = query(ref(db, DB_PATH), limitToLast(50)); // Get last 50 messages
+  
+  const listener = onValue(messagesRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      callback([]);
+      return;
     }
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error("Failed to load guestbook", e);
-    return SEED_DATA;
-  }
+
+    // Convert object { key: val, key2: val } to array [val, val]
+    // And reverse to show newest first
+    const parsedMessages: GuestBookEntry[] = Object.keys(data).map(key => ({
+      ...data[key],
+      id: key // Use Firebase key as ID
+    })).sort((a, b) => b.timestamp - a.timestamp);
+
+    callback(parsedMessages);
+  });
+
+  // Return unsubscribe function
+  return () => off(messagesRef, 'value', listener);
 };
 
-export const addGuestbookMessage = (name: string, message: string): GuestBookEntry[] => {
-  const current = getGuestbookMessages();
-  const newEntry: GuestBookEntry = {
-    id: Date.now().toString(),
+export const addGuestbookMessage = async (name: string, message: string): Promise<void> => {
+  const messagesRef = ref(db, DB_PATH);
+  const newMsgRef = push(messagesRef); // Generate unique ID
+  
+  const newEntry: Omit<GuestBookEntry, 'id'> = {
     name: name.trim() || 'Anonymous',
     message: message.trim(),
     timestamp: Date.now()
   };
-  
-  const updated = [newEntry, ...current];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  
-  // Trigger storage event for other tabs
-  window.dispatchEvent(new Event('storage'));
-  
-  return updated;
+
+  await set(newMsgRef, newEntry);
+};
+
+// Deprecated: getGuestbookMessages is replaced by the subscription model
+export const getGuestbookMessages = (): GuestBookEntry[] => {
+  return []; 
 };

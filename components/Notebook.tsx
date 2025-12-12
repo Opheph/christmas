@@ -53,7 +53,7 @@ export const Notebook: React.FC = () => {
                     Observations on Lexi
                 </h2>
                 <p className="text-center text-[#8D6E63] italic mb-6 text-sm">
-                    (Continually updated; she is softer than she seems)
+                    (Continually updated...)
                 </p>
 
                 <div className="space-y-6 text-lg leading-relaxed font-medium">

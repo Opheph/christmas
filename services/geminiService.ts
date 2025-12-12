@@ -1,7 +1,12 @@
-import { GoogleGenAI, Chat } from "@google/genai";
+import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const API_MODEL_NAME = 'gemini-2.0-flash-exp';
+
+// ============================================================================
 
 const YANCY_SYSTEM_INSTRUCTION = `
 You are Yancy. You are a small, pixel-art cat living in a Christmas scene.
@@ -54,15 +59,17 @@ You refer to yourself as "cat" (lowercase) in your internal monologue and often 
 - If she asks about herself, share a "fragment" from your notebook with your own poetic interpretation.
 `;
 
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 let chatSession: Chat | null = null;
 
 export const initializeChat = () => {
   chatSession = ai.chats.create({
-    model: 'gemini-2.5-flash',
+    model: API_MODEL_NAME,
     config: {
       systemInstruction: YANCY_SYSTEM_INSTRUCTION,
-      temperature: 0.9, // Higher for warmth and playfulness
-    },
+      temperature: 0.9,
+      maxOutputTokens: 150,
+    }
   });
 };
 
@@ -72,12 +79,14 @@ export const sendMessageToYancy = async (message: string): Promise<string> => {
   }
 
   try {
-    if (!chatSession) throw new Error("Chat session failed to initialize");
-    
-    const response = await chatSession.sendMessage({ message });
-    return response.text || "Purr... I'm here for you, Lexi.";
+    if (!chatSession) throw new Error("Chat session not initialized");
+
+    const response: GenerateContentResponse = await chatSession.sendMessage({ message });
+    return response.text || "...";
+
   } catch (error) {
     console.error("Error talking to Yancy:", error);
-    return "Meow? (cat lost the thought...)";
+    // Fallback response if API fails
+    return "Meow... (The connection to the cat planet is weak...)";
   }
 };
