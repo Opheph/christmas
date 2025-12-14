@@ -6,6 +6,7 @@ import { Snowfall } from './components/Snowfall';
 import { Notebook } from './components/Notebook';
 import { MessageBoard } from './components/MessageBoard';
 import { FloatingLetter } from './components/FloatingLetter';
+import { ChessGame } from './components/ChessGame';
 import { initializeChat } from './services/geminiService';
 import { HatType, AccessoryType } from './types';
 
@@ -64,6 +65,9 @@ const App: React.FC = () => {
 
             {/* Message Board Component (Left Side) */}
             <MessageBoard />
+
+            {/* Chess Game Component (New) */}
+            <ChessGame onYancyMessage={handleYancyMessage} />
 
             {/* Cat Layer - Shares the same coordinate context as the tree essentially, but overlaid */}
             <div className="absolute bottom-0 w-full h-full pointer-events-none">
