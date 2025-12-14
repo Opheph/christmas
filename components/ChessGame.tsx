@@ -12,6 +12,13 @@ export const ChessGame: React.FC<ChessGameProps> = ({ onYancyMessage }) => {
   const [history, setHistory] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
 
+  // Safety fallback: if Chessboard import failed or is undefined
+  const SafeChessboard = (Chessboard as any) || (() => (
+      <div className="w-full h-full flex items-center justify-center text-red-400 text-center p-4">
+          Chessboard failed to load.<br/>(Library Error)
+      </div>
+  ));
+
   // Reset game when opening modal
   useEffect(() => {
     if (isOpen) {
@@ -174,7 +181,8 @@ export const ChessGame: React.FC<ChessGameProps> = ({ onYancyMessage }) => {
 
             {/* Board Container */}
             <div className="w-full aspect-square max-w-[400px] border-4 border-[#2D1B15] bg-[#2D1B15]">
-                <Chessboard 
+                {/* Render SafeChessboard with standard props, ignoring TS exact match for 'any' cast */}
+                <SafeChessboard 
                     position={game.fen()} 
                     onPieceDrop={onDrop}
                     arePiecesDraggable={!result && game.turn() === 'w'} // Only User (White) can drag, and only if game isn't over

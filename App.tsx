@@ -83,9 +83,9 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        {/* User Subtitle Display - Moved Higher Up for visibility */}
-        {/* Changed bottom-44/48 to bottom-56/64 to clear the input box completely */}
-        <div className="absolute bottom-56 sm:bottom-64 w-full flex justify-center z-40 px-4 pointer-events-none">
+        {/* User Subtitle Display - Positioned just above the input box */}
+        {/* Z-index increased to 60 to sit above footer gradient. Bottom spacing increased for desktop. */}
+        <div className="absolute bottom-32 sm:bottom-48 w-full flex justify-center z-[60] px-4 pointer-events-none">
            {userSubtitle && (
              <div className="bg-black/60 px-6 py-2 rounded-lg backdrop-blur-sm border-2 border-white/20 animate-fade-in max-w-[90%] sm:max-w-2xl">
                <p className="text-lg text-yellow-100 text-center tracking-wide leading-tight">
