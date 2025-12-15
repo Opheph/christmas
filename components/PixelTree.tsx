@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export const PixelTree: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -22,6 +22,14 @@ export const PixelTree: React.FC = () => {
     { x: 22, y: 72, delay: '1.5s' },
     { x: 76, y: 68, delay: '0.7s' },
   ];
+
+  // Client-only random delays to avoid SSR/CSR hydration mismatch
+  const [clientDelays, setClientDelays] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    // Generate randomized negative delays only on the client after mount
+    setClientDelays(lights.map(() => `-${Math.random().toFixed(3)}s`));
+  }, []);
 
   return (
     <div 
@@ -214,7 +222,9 @@ export const PixelTree: React.FC = () => {
                 height="2" 
                 className={isLit ? "animate-disco" : "animate-pulse"}
                 style={{ 
-                    animationDelay: isLit ? `-${Math.random()}s` : l.delay,
+              // Use server-safe static delay on first render and switch to
+              // randomized delays after mount to prevent hydration mismatch
+              animationDelay: isLit ? (clientDelays ? clientDelays[i] : l.delay) : l.delay,
                     // When lit, the class controls the fill. When not lit, it's white.
                     fill: isLit ? undefined : '#FFF' 
                 }}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { sendMessageToYancy } from '../services/geminiService';
+// Calls server-side API at /api/gemini to keep API key on backend
 import { HatType, AccessoryType } from '../types';
 
 interface ChatInterfaceProps {
@@ -35,9 +35,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInputText('');
     setLoading(true);
 
-    const responseText = await sendMessageToYancy(userText);
-    
-    onYancyMessage(responseText);
+    // POST to server API which will call Gemini with the API key
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userText })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data?.error || data?.message || 'AI service returned an error';
+        onYancyMessage(`Meow... (${errMsg})`);
+      } else {
+        const responseText = data?.text || '...';
+        onYancyMessage(responseText);
+      }
+    } catch (err) {
+      onYancyMessage('Meow... (unable to reach the cat planet)');
+    }
     setLoading(false);
   };
 
